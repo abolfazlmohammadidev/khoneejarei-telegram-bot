@@ -250,8 +250,6 @@ async function sendApartment(ctx, code) {
     );
   }
 
-  await ctx.reply(`🏡 تصاویر و مشخصات واحد با کد ${code}:`);
-
   for (const post of posts) {
     try {
       await ctx.telegram.copyMessage(
@@ -275,7 +273,10 @@ async function sendApartment(ctx, code) {
     buttons.push([Markup.button.url("رزرو و هماهنگی", CONTACT_URL)]);
   }
   buttons.push([Markup.button.url("گروه تلگرام ما", GROUP_URL)]);
-  await ctx.reply("برای رزرو یا دریافت اطلاعات بیشتر:", Markup.inlineKeyboard(buttons));
+  await ctx.reply(
+    `🏡 تصاویر و مشخصات واحد با کد ${code}:\n\nبرای رزرو یا دریافت اطلاعات بیشتر:`,
+    Markup.inlineKeyboard(buttons)
+  );
 }
 
 // Customer sends only the apartment code in a private chat.
