@@ -241,43 +241,65 @@ bot.command("find", async (ctx) => {
   await sendApartment(ctx, code);
 });
 
+
 async function sendApartment(ctx, code) {
   const posts = index.posts[String(code)] || [];
+
   if (!posts.length) {
-    return ctx.reply(
-      `واحدی با کد ${code} پیدا نشد. ❌\n` +
-        "لطفاً کد را بررسی کنید یا با پشتیبانی تماس بگیرید."
-    );
+    return ctx.reply("هیچ سوییتی با این کد وجود ندارد!");
   }
 
+  // Collect the original listing text/captions dynamically.
+  // This requires the index entries to contain their text/caption.
+  const description = posts
+    .map((post) => post.text || post.caption || "")
+    .filter((text) => text.trim().length > 0)
+    .join("\n\n");
+
+  // Send photos/media first, without copying their captions.
   for (const post of posts) {
     try {
       await ctx.telegram.copyMessage(
         ctx.chat.id,
         post.chatId,
-        post.messageId
+        post.messageId,
+        { caption: "" }
       );
     } catch (error) {
       console.error(
         `Failed to copy ${post.chatId}/${post.messageId}:`,
         error.message
       );
-      await ctx.reply(
-        "بخشی از اطلاعات این واحد ارسال نشد. لطفاً با پشتیبانی تماس بگیرید."
-      );
     }
   }
 
-  const buttons = [];
-  if (CONTACT_URL) {
-    buttons.push([Markup.button.url("رزرو و هماهنگی", CONTACT_URL)]);
+  // Send the actual listing description after the media.
+  if (description) {
+    await ctx.reply(description);
+  } else {
+    await ctx.reply(
+      `🏡 تصاویر و مشخصات واحد با کد ${code}`
+    );
   }
-  buttons.push([Markup.button.url("گروه تلگرام ما", GROUP_URL)]);
+
+  const buttons = [];
+
+  if (CONTACT_URL) {
+    buttons.push([
+      Markup.button.url("رزرو و هماهنگی", CONTACT_URL),
+    ]);
+  }
+
+  buttons.push([
+    Markup.button.url("گروه تلگرام ما", GROUP_URL),
+  ]);
+
   await ctx.reply(
-    `🏡 تصاویر و مشخصات واحد با کد ${code}:\n\nبرای رزرو یا دریافت اطلاعات بیشتر:`,
+    "برای رزرو یا دریافت اطلاعات بیشتر:",
     Markup.inlineKeyboard(buttons)
   );
 }
+
 
 // Customer sends only the apartment code in a private chat.
 bot.on("text", async (ctx) => {
